@@ -1,3 +1,4 @@
 #!/bin/bash
 echo "Hello from Jenkins at $(date)"
 echo "Jenkins Trigger Test - $(date)"
+echo "New build triggered at $(date)" >> hello.sh
