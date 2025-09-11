@@ -1,0 +1,7 @@
+# Do not commit AWS keys, PEM files, node_modules, etc.
+*.pem
+*.key
+.env
+node_modules/
+.vscode/
+.DS_Store
