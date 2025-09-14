@@ -1,0 +1,8 @@
+install:
+  runtime-versions:
+    nodejs: 18
+  commands:
+    - echo Installing kubectl...
+    - curl -o kubectl https://s3.amazonaws.com/aws-cli/kubectl/kubectl-linux
+    - chmod +x ./kubectl
+    - mv ./kubectl /usr/local/bin/kubectl

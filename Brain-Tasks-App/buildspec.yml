@@ -1,0 +1,49 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: ap-south-1
+  parameter-store:
+    REPOSITORY_URI: "/brain-tasks/repo-uri"
+    IMAGE_TAG: "/brain-tasks/image-tag"
+    EKS_CLUSTER_NAME: "/brain-tasks/eks-cluster-name"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+      - echo Installing kubectl...
+      - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      - chmod +x kubectl
+      - mv kubectl /usr/local/bin/kubectl
+
+  pre_build:
+    commands:
+      - echo Installing dependencies...
+      - npm install
+
+  build:
+    commands:
+      - echo Building Docker image...
+      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+      - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest
+
+  post_build:
+    commands:
+      - echo Pushing Docker image to ECR...
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - docker push $REPOSITORY_URI:latest
+
+      - echo Setting up kubeconfig using aws eks update-kubeconfig...
+      - aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+
+      - echo Deploying to EKS...
+      - kubectl apply --validate=false -f k8s/
+
+artifacts:
+  files:
+    - '**/*'
